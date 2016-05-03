@@ -89,8 +89,7 @@ public class API implements APIProvider {
    * @return If a person with the given username exists, a fully populated
    * PersonView. Otherwise, failure (or fatal on a database error).
    */
-
-    @Override
+@Override
     public Result<List<SimpleForumSummaryView>> getSimpleForums() {
       if (c == null) { throw new IllegalStateException(); }
       List<SimpleForumSummaryView> list = new LinkedList<>();
@@ -281,13 +280,14 @@ public class API implements APIProvider {
       }
     }
 
+
     /**
      * Get the "main page" containing a list of forums ordered alphabetically
      * by title.
      * @return the list of all forums, empty list if there are none.
      */
 
-    @Override
+   @Override
     public Result createForum(String title) {
       if (title == null || title.equals("")) {
         return Result.failure("Need a valid title");
@@ -315,7 +315,6 @@ public class API implements APIProvider {
       } catch (SQLException e) {
            return Result.fatal("Something bad happened: " + e);
       }
-
     }
     /**
      * Create a new forum.
@@ -325,7 +324,7 @@ public class API implements APIProvider {
      * null, empty or such a forum already existed; fatal on other errors.
      */
 
-    @Override
+   @Override
     public Result createPost(long topicId, String username, String text) {
       if (text == null || text.equals("")) {
       return Result.failure("Need a valid text");
@@ -350,7 +349,7 @@ public class API implements APIProvider {
      } catch (SQLException e) {
            return Result.fatal("Something bad happened: " + e);
      }
-     final String SQL3 = "INSERT INTO post( topic,author,posttext,created) VALUSE ( ?,?,?,?)";
+     final String SQL3 = "INSERT INTO post( topic,author,posttext,created) VALUES ( ?,?,?,?)";
      try (PreparedStatement p = c.prepareStatement(SQL3)) {
            p.setInt(1, (int)topicId);
            p.setString(2,username);
@@ -379,7 +378,7 @@ public class API implements APIProvider {
      * were not met and fatal if something else went wrong.
      */
 
-    @Override
+   @Override
     public Result addNewPerson(String name, String username, String studentId) {
       if (name == null || name.equals("")) {
               return Result.failure("Need a valid name");
@@ -403,7 +402,7 @@ public class API implements APIProvider {
 
 
          if(studentId==null) {
-              final String SQL3 = "INSERT INTO person ( name,username) VALUSE ( ?,?)";
+              final String SQL3 = "INSERT INTO person ( name,username) VALUES ( ?,?)";
               try (PreparedStatement p = c.prepareStatement(SQL3)) {
                  p.setString(1, name);
                  p.setString(2, username);
@@ -419,7 +418,7 @@ public class API implements APIProvider {
          }
          else
          {
-              final String SQL3 = "INSERT INTO person ( name,username,stuID) VALUSE ( ?,?,?)";
+              final String SQL3 = "INSERT INTO person ( name,username,stuID) VALUES ( ?,?,?)";
               try (PreparedStatement p = c.prepareStatement(SQL3)) {
                  p.setString(1, name);
                  p.setString(2, username);
