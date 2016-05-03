@@ -286,9 +286,35 @@ public class API implements APIProvider {
 
 
      // @ Writed by Emma
-    @Override
+   @Override
     public Result createForum(String title) {
-        throw new UnsupportedOperationException("Not supported yet.");
+      if (title == null || title.equals("")) {
+        return Result.failure("Need a valid title");
+      }
+      final String SQL1 = "SELECT * FROM forum WHERE title = ?";
+      try (PreparedStatement p = c.prepareStatement(SQL1)) {
+           p.setString(1, title);
+           ResultSet r = p.executeQuery();
+           if (r.next()) {
+                   return Result.failure("title is duplicated");
+           }
+      } catch (SQLException e) {
+           return Result.fatal("Something bad happened: " + e);
+      }
+      final String SQL2 = "INSERT INTO forum (title) VALUES (?)";
+      try (PreparedStatement p = c.prepareStatement(SQL2)) {
+           p.setString(1, title);
+           int iResult=p.executeUpdate();
+           if(iResult==0){
+              return Result.failure("insert  is failied ");
+           }
+           else
+              return Result.success();
+
+      } catch (SQLException e) {
+           return Result.fatal("Something bad happened: " + e);
+      }
+
     }
     /**
      * Create a new forum.
@@ -300,9 +326,49 @@ public class API implements APIProvider {
 
 
      // @ Writed by Emma
-    @Override
+   @Override
     public Result createPost(long topicId, String username, String text) {
-        throw new UnsupportedOperationException("Not supported yet.");
+      if (text == null || text.equals("")) {
+      return Result.failure("Need a valid text");
+     }
+     final String SQL1 = "SELECT * FROM topic WHERE topicId = ?";
+     try (PreparedStatement p = c.prepareStatement(SQL1)) {
+           p.setInt(1, (int)topicId);
+           ResultSet r = p.executeQuery();
+           if (!r.next()) {
+              return Result.failure("Topic ID does not exist!");
+           }
+     } catch (SQLException e) {
+           return Result.fatal("Something bad happened: " + e);
+     }
+     final String SQL2 = "SELECT * FROM person WHERE username = ?";
+     try (PreparedStatement p = c.prepareStatement(SQL2)) {
+           p.setString(1, username);
+           ResultSet r = p.executeQuery();
+           if (!r.next()) {
+              return Result.failure("username does not exist!");
+           }
+     } catch (SQLException e) {
+           return Result.fatal("Something bad happened: " + e);
+     }
+     final String SQL3 = "INSERT INTO post( topic,author,posttext,created) VALUES ( ?,?,?,?)";
+     try (PreparedStatement p = c.prepareStatement(SQL3)) {
+           p.setInt(1, (int)topicId);
+           p.setString(2,username);
+           p.setString(3,text);
+           java.util.Date date=new java.util.Date();
+           p.setInt(4,(int)date.getTime());
+
+           int iResult = p.executeUpdate();
+           if (iResult==0) {
+              return Result.failure("Can not insert a post!");
+           }
+           else {
+              return Result.success();
+           }
+     } catch (SQLException e) {
+           return Result.fatal("Something bad happened: " + e);
+     }
     }
     /**
      * Create a post in an existing topic.
@@ -316,9 +382,61 @@ public class API implements APIProvider {
 
 
      // @ Writed by Emma
-    @Override
+     @Override
     public Result addNewPerson(String name, String username, String studentId) {
-           throw new UnsupportedOperationException("Not supported yet.");
+      if (name == null || name.equals("")) {
+              return Result.failure("Need a valid name");
+         }
+         if (username == null || username.equals("")) {
+              return Result.failure("Need a valid username");
+         }
+         if (studentId != null && studentId.equals("")) {
+              return Result.failure("Need a valid studentID");
+         }
+         final String SQL1 = "SELECT * FROM person WHERE username = ?";
+         try (PreparedStatement p = c.prepareStatement(SQL1)) {
+              p.setString(1, username);
+              ResultSet r = p.executeQuery();
+              if (r.next()) {
+                 return Result.failure("username duplicates!");
+              }
+         } catch (SQLException e) {
+              return Result.fatal("Something bad happened: " + e);
+         }
+
+
+         if(studentId==null) {
+              final String SQL3 = "INSERT INTO person ( name,username) VALUES ( ?,?)";
+              try (PreparedStatement p = c.prepareStatement(SQL3)) {
+                 p.setString(1, name);
+                 p.setString(2, username);
+                 int iResult = p.executeUpdate();
+                 if (iResult == 0) {
+                      return Result.failure("Can not insert a person!");
+                 } else {
+                      return Result.success();
+                 }
+              } catch (SQLException e) {
+                 return Result.fatal("Something bad happened: " + e);
+              }
+         }
+         else
+         {
+              final String SQL3 = "INSERT INTO person ( name,username,stuID) VALUES ( ?,?,?)";
+              try (PreparedStatement p = c.prepareStatement(SQL3)) {
+                 p.setString(1, name);
+                 p.setString(2, username);
+                 p.setString(3, studentId);
+                 int iResult = p.executeUpdate();
+                 if (iResult == 0) {
+                      return Result.failure("Can not insert a person!");
+                 } else {
+                      return Result.success();
+                 }
+              } catch (SQLException e) {
+                 return Result.fatal("Something bad happened: " + e);
+              }
+         }
     }
     /**
      * Create a new person.
