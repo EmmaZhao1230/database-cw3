@@ -585,56 +585,37 @@ public class API implements APIProvider {
 
 
      // @ Written by Fan Zhao
-     // @ correct by Fan Zhao
-     @Override
-      public Result<List<AdvancedForumSummaryView>> getAdvancedForums() {
+     // @ Reconstructed by Luping Yu
+    @Override
+    public Result<List<AdvancedForumSummaryView>> getAdvancedForums() {
+      if (c == null) { throw new IllegalStateException(); }
+      List<AdvancedForumSummaryView> list = new LinkedList<>();
 
-          final String strSQL="SELECT Topic.id as topicId, forum.id as forumId, forum.title as forumTitle, Topic.title as [title]," +
-                  "        lastPost.countPost as postCount,Topic.created as created,  inLikes.likes as likes,  Person.name as creatorName," +
-                  "        Person.username as creatorUserName, lastPost.lastCreated as lastPostTime,lastPost.lastAuthor as lastPostName " +
-                  "FROM Topic " +
-                  "INNER JOIN Forum ON Forum.id= Topic.forum " +
-                  "LEFT JOIN ( SELECT COUNT(person) as likes,topic FROM LikeTopic group by topic ) inLikes ON inlikes.topic =topic.id " +
-                  "LEFT JOIN ( SELECT post.topic as lastTopic,person.username as lastAuthor,inPost.countPost as countPost,post.created as lastCreated " +
-                  "            FROM post  " +
-                  "            INNER JOIN ( SELECT Max(Post.created) as created, COUNT(*) as countPost,Post.topic as topic " +
-                  "            FROM Post INNER JOIN Topic ON post.topic=topic.id group by Post.topic) inPost " +
-                  "            ON post.created=inPost.created and post.topic=inPost.topic " +
-                  "            INNER JOIN Person ON Person.id=Post.author) lastPost " +
-                  "ON lastPost.lastTopic=topic.id " +
-                  "INNER JOIN Person ON Person.id=topic.creator " +
-                  "order by Topic.title";
-
-          List<AdvancedForumSummaryView> list=  new LinkedList<>();
-          try (PreparedStatement p = c.prepareStatement(strSQL)) {
-              ResultSet r = p.executeQuery();
-              while (r.next()) {
-                  TopicSummaryView view= new TopicSummaryView(
-                          r.getLong("topicId"), r.getLong("forumId"), r.getString("title") ,
-                          r.getInt("postCount"),r.getInt("created"), r.getInt("lastPostTime"),
-                          r.getString("lastPostName"), r.getInt("likes"),r.getString("creatorName"),
-                          r.getString("creatorUserName"));
-                  AdvancedForumSummaryView viewForum=new AdvancedForumSummaryView(r.getLong("forumId"),
-                          r.getString("forumTitle") ,view);
-                  list.add(viewForum);
-              };
-
-
-              if(list.size()==0)
-                  return Result.failure(" list is empty");
-
-              else {
-                  return Result.success(list);
-              }
-
-          }
-          catch(SQLException e){
-              throw new RuntimeException("Something bad happened: " + e);
-             //Result.fatal("Something bad happened: " + e);
-          }
-
+      try (PreparedStatement p = c.prepareStatement(
+      "SELECT Forum.id AS fid, Forum.title AS ftitle, Topic.id AS tid, " +
+      "Topic.title AS ttitle, created, ptime, pcount, pauthor, name, username " +
+      "FROM Forum LEFT OUTER JOIN Topic ON (forum = Forum.id) " +
+      "LEFT OUTER JOIN " +
+      "(SELECT topic AS ptopic, name AS pauthor, count(*) AS pcount, max(created) AS ptime " +
+      "FROM Post INNER JOIN Person ON (author = id) GROUP BY topic) " +
+      "ON (Topic.id = ptopic) INNER JOIN Person ON (creator = Person.id)")) {
+         ResultSet r = p.executeQuery();
+         while (r.next()) {
+            TopicSummaryView tsv = new TopicSummaryView(r.getLong("tid"),
+            r.getLong("fid"), r.getString("ttitle"), r.getInt("pcount"),
+            r.getInt("created"), r.getInt("ptime"), r.getString("pauthor"),
+            likesCount(r.getLong("tid"), "Topic"), r.getString("name"), r.getString("username"));
+            AdvancedForumSummaryView afsv = new AdvancedForumSummaryView(r.getLong("fid"),
+            r.getString("ftitle"), tsv);
+            list.add(afsv);
+         }
+         return Result.success(list);
+      } catch (SQLException e) {
+         return Result.fatal("Something bad happened: " + e);
       }
-
+    }
+    
+    
      // @ Written by Luping Yu
      // Checked by Luping Yu
     @Override
